@@ -1,0 +1,21 @@
+{
+  "name": "@netang/vue-utils",
+  "version": "3.0.1",
+  "description": "netang-vue-utils",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/netangsoft/netang-vue-utils.git"
+  },
+  "keywords": [
+    "netang-vue-utils"
+  ],
+  "author": "Netang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/netangsoft/netang-vue-utils/issues"
+  },
+  "homepage": "https://github.com/netangsoft/netang-vue-utils#readme"
+}
