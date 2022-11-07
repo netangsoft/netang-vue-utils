@@ -2,13 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const webpack = require('webpack')
 const _has = require('lodash/has')
-const _findIndex = require('lodash/findIndex')
+const _isFunction = require('lodash/isFunction')
 const _merge = require('lodash/merge')
 const Service = require('@vue/cli-service/lib/Service')
 const { defineConfig } = require('@vue/cli-service')
 
 const ROOT_PATH = require('@netang/node-utils/rootPath')
-const runExec = require('@netang/node-utils/runExec')
 const getFileHashName = require('@netang/node-utils/getFileHashName')
 const forEach = require('@netang/utils/forEach')
 const forIn = require('@netang/utils/forIn')
@@ -93,7 +92,11 @@ async function build(params) {
 
     const o = _merge({
         // 新环境变量
-        env: ()=>{},
+        env: null,
+        // 替换包含内容
+        replaceInclude: null,
+        // 替换全局变量
+        replaceDefine: null,
         // 是否开启 ssr
         ssr: false,
         // 开启后端监听
@@ -148,8 +151,11 @@ async function build(params) {
      */
     function getConfig(server, defineEnv) {
 
+        // 全局模板变量
+        const newReplaceDefine = Object.assign({}, replaceDefine, _isFunction(o.replaceDefine) ? o.replaceDefine(server) : {})
+
         // 新环境变量
-        const newEnv = Object.assign({}, env, o.env(server), {
+        const newEnv = Object.assign({}, env, _isFunction(o.env) ? o.env(server) : {}, {
             // 是否开启 ssr
             IS_SSR: o.ssr,
             // 前端
@@ -261,6 +267,7 @@ async function build(params) {
                 .loader(replaceLoader)
                 .options({
                     env: newEnv,
+                    include: o.replaceInclude,
                 })
                 .end()
 
@@ -271,7 +278,8 @@ async function build(params) {
                 .loader(replaceLoader)
                 .options({
                     env: newEnv,
-                    replace: replaceDefine,
+                    replace: newReplaceDefine,
+                    include: o.replaceInclude,
                 })
                 .end()
 
