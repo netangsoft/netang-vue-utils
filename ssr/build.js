@@ -67,7 +67,7 @@ function getHtmlDefine({ lang, meta, css, js, script }) {
     // ------------------------------
     let __HTML_JS__ = ''
     forEach(js, function(item) {
-        __HTML_JS__ += `<script src="${item}"${env.IS_DEV ? '' : ' defer="defer"'}></script>`
+        __HTML_JS__ += `<script src="${item}" defer="defer"></script>`
     })
 
     // 【script】
@@ -86,7 +86,10 @@ function getHtmlDefine({ lang, meta, css, js, script }) {
     }
 }
 
-module.exports = async function(params) {
+/**
+ * 服务编译
+ */
+async function build(params) {
 
     const o = _merge({
         // 新环境变量
@@ -102,9 +105,18 @@ module.exports = async function(params) {
         // 公共配置
         common: {},
         // 前端配置
-        web: {},
+        web: {
+            // 开发服务
+            devServer: {
+                port: '58809',
+            },
+        },
         // 后端配置
         server: {
+            // 开发服务
+            devServer: {
+                port: '58808',
+            },
             // 打包路径
             outputDir: path.join(ROOT_PATH, 'dist/server'),
         },
@@ -117,14 +129,19 @@ module.exports = async function(params) {
             script: '',
         },
     }, params)
-    
-    // 获取 html 模板变量
-    const htmlDefine = getHtmlDefine(o.html)
 
     // 前端打包路径
     if (! _has(o.web, 'outputDir')) {
         o.web.outputDir = o.ssr ? path.join(ROOT_PATH, 'dist/web') : path.join(ROOT_PATH, 'dist')
     }
+
+    // 获取模板替换变量
+    const replaceDefine = Object.assign(getHtmlDefine(o.html), {
+        // 前端端口
+        __WEB_PORT__: o.web.devServer.port,
+        // 后端端口
+        __SERVER_PORT__: o.server.devServer.port,
+    })
 
     /**
      * 获取配置
@@ -153,6 +170,9 @@ module.exports = async function(params) {
 
             // 生产源地图
             productionSourceMap: ! server,
+
+            // 开发服务
+            devServer: {},
 
             // webpack 配置
             configureWebpack: {
@@ -211,14 +231,12 @@ module.exports = async function(params) {
                 // 打包路径
                 config.outputDir = path.join(ROOT_PATH, 'build/web')
 
-                // 开发服务器
-                config.devServer = {
-                    host: '0.0.0.0',
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
-                        'Access-Control-Allow-Headers': 'X-Requested-With,content-type,Authorization',
-                    }
+                // 开发服务
+                config.devServer.host = '0.0.0.0'
+                config.devServer.headers = {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
+                    'Access-Control-Allow-Headers': 'X-Requested-With,content-type,Authorization',
                 }
             }
         }
@@ -253,7 +271,7 @@ module.exports = async function(params) {
                 .loader(replaceLoader)
                 .options({
                     env: newEnv,
-                    replace: htmlDefine,
+                    replace: replaceDefine,
                 })
                 .end()
 
@@ -446,3 +464,5 @@ module.exports = async function(params) {
 
     return result
 }
+
+module.exports = build

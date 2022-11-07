@@ -48,18 +48,14 @@ function httpGet(url) {
 /**
  * ssr 服务
  */
-function ssrServer(params) {
-
-    const o = Object.assign({
-        // 服务端口
-        port: '58808',
-        // 渲染数据
-        render: null,
-    }, params)
+function ssrServer(render) {
 
     /* #if IS_DEV */
     // 创建代理服务
-    const serverProxy = require('http-proxy').createProxyServer(Object.assign({}, o.proxy))
+    const proxyTarget = `http://127.0.0.1:__WEB_PORT__/`
+    const serverProxy = require('http-proxy').createProxyServer({
+        target: proxyTarget,
+    })
     /* #endif */
 
     // 创建 http 服务
@@ -78,7 +74,7 @@ function ssrServer(params) {
         // 获取 manifest.json 内容
         /* #if IS_DEV */
         if (! manifest) {
-            const { status, data } = await httpGet(`${o.proxy.target}manifest.json`)
+            const { status, data } = await httpGet(`${proxyTarget}manifest.json`)
             if (status) {
                 // 生成 json 内容
                 const json = {
@@ -95,7 +91,7 @@ function ssrServer(params) {
                         if (ext === 'css') {
                             json.css += `<link href="${data[key]}" rel="preload">`
                         } else if (ext === 'js') {
-                            json.js += `<script src="${data[key]}"></script>`
+                            json.js += `<script src="${data[key]}" defer="defer"></script>`
                         }
                     }
                 }
@@ -109,7 +105,7 @@ function ssrServer(params) {
         res.statusCode = 200
         res.setHeader('Content-Type', 'text/html;charset=utf-8')
         res.end(await ssrRender(Object.assign(
-            await runAsync(o.render)({
+            await runAsync(render)({
                 url: ctx.url,
             }),
             {
@@ -119,12 +115,12 @@ function ssrServer(params) {
     })
 
     // 监听 http 服务
-    httpServer.listen(o.port, '0.0.0.0', function() {
+    httpServer.listen(__SERVER_PORT__, '0.0.0.0', function() {
         const interfaces = os.networkInterfaces()
         for (const devName in interfaces) {
             for (const { family, address, internal } of interfaces[devName]) {
                 if (family === 'IPv4' && address !== '127.0.0.1' && ! internal) {
-                    console.log(`  - Server: http://${address}:${o.port}/`);
+                    console.log(`  - Server: http://${address}:${__SERVER_PORT__}/`);
                 }
             }
         }
