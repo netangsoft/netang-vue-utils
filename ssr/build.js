@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const webpack = require('webpack')
 const _has = require('lodash/has')
+const _findIndex = require('lodash/findIndex')
 const _merge = require('lodash/merge')
 const Service = require('@vue/cli-service/lib/Service')
 const { defineConfig } = require('@vue/cli-service')
@@ -11,8 +12,10 @@ const runExec = require('@netang/node-utils/runExec')
 const getFileHashName = require('@netang/node-utils/getFileHashName')
 const forEach = require('@netang/utils/forEach')
 const forIn = require('@netang/utils/forIn')
+const join = require('@netang/utils/join')
 const sortAsc = require('@netang/utils/sortAsc')
 const isFillObject = require('@netang/utils/isFillObject')
+const isFillString = require('@netang/utils/isFillString')
 const getFileType = require('@netang/node-utils/getFileType')
 const getExt = require('@netang/utils/getExt')
 const delFile = require('@netang/node-utils/delFile')
@@ -20,6 +23,68 @@ const env = require('@netang/node-utils/getEnv')()
 
 const replaceLoader = require.resolve('@netang/node-utils/loader/webpack.replace.loader.js')
 let WebpackManifestPlugin = null
+
+/**
+ * 获取 html 模板变量
+ */
+function getHtmlDefine({ lang, meta, css, js, script }) {
+
+    // 【meta】
+    // ------------------------------
+    let __HTML_META__ = ''
+    let hasCharset = false
+    let hasViewport = false
+    forEach(meta, function(item) {
+        const metas = []
+        forIn(item, function(value, key) {
+            metas.push(`${key}="${value}"`)
+            if (! hasCharset && key === 'charset') {
+                hasCharset = true
+            }
+            if (! hasViewport && value === 'viewport') {
+                hasViewport = true
+            }
+        })
+        if (metas.length) {
+            __HTML_META__ += `<meta ${join(metas, ' ')}>`
+        }
+    })
+    if (! hasViewport) {
+        __HTML_META__ = `<meta name="viewport" content="width=device-width,initial-scale=1.0">` + __HTML_META__
+    }
+    if (! hasCharset) {
+        __HTML_META__ = `<meta charset="utf-8">` + __HTML_META__
+    }
+
+    // 【css】
+    // ------------------------------
+    let __HTML_CSS__ = ''
+    forEach(css, function(item) {
+        __HTML_CSS__ += `<link href="${item}" rel="stylesheet">`
+    })
+
+    // 【js】
+    // ------------------------------
+    let __HTML_JS__ = ''
+    forEach(js, function(item) {
+        __HTML_JS__ += `<script src="${item}"${env.IS_DEV ? '' : ' defer="defer"'}></script>`
+    })
+
+    // 【script】
+    // ------------------------------
+    let __HTML_SCRIPT__ = ''
+    if (isFillString(script)) {
+        __HTML_SCRIPT__ = script
+    }
+
+    return {
+        __HTML_LANG__: lang,
+        __HTML_META__,
+        __HTML_CSS__,
+        __HTML_JS__,
+        __HTML_SCRIPT__,
+    }
+}
 
 module.exports = async function(params) {
 
@@ -43,7 +108,18 @@ module.exports = async function(params) {
             // 打包路径
             outputDir: path.join(ROOT_PATH, 'dist/server'),
         },
+        // html 模板
+        html: {
+            lang: 'en',
+            meta: [],
+            css: [],
+            js: [],
+            script: '',
+        },
     }, params)
+    
+    // 获取 html 模板变量
+    const htmlDefine = getHtmlDefine(o.html)
 
     // 前端打包路径
     if (! _has(o.web, 'outputDir')) {
@@ -177,6 +253,7 @@ module.exports = async function(params) {
                 .loader(replaceLoader)
                 .options({
                     env: newEnv,
+                    replace: htmlDefine,
                 })
                 .end()
 
@@ -300,7 +377,7 @@ module.exports = async function(params) {
         const manifestJson = require(path.join(webConfig.outputDir, 'manifest.json'))
 
         // 生成 json 内容
-        const MANIFEST = {
+        const json = {
             // ico
             ico: '',
             // css
@@ -311,7 +388,7 @@ module.exports = async function(params) {
 
         // 如果有 ico
         if (_has(manifestJson, 'favicon.ico')) {
-            MANIFEST.ico = `<link href="${manifestJson['favicon.ico']}" rel="icon">`
+            json.ico = `<link href="${manifestJson['favicon.ico']}" rel="icon">`
         }
 
         const css = []
@@ -339,22 +416,22 @@ module.exports = async function(params) {
 
         // 获取 css
         forEach(sortAsc(css, 'index'), function({ url }) {
-            MANIFEST.css += `<link href="${url}" rel="stylesheet">`
+            json.css += `<link href="${url}" rel="stylesheet">`
         })
 
         // 获取 js
         forEach(sortAsc(js, 'index'), function({ url }) {
-            MANIFEST.js += `<script src="${url}"></script>`
+            json.js += `<script src="${url}" defer="defer"></script>`
         })
 
         // 编译后端
         console.log('\n------编译后端')
         const serverConfig = getConfig(true, {
             // 设置资源清单环境变量
-            __MANIFEST__: JSON.stringify(MANIFEST),
+            __HTML_MANIFEST__: JSON.stringify(json),
         })
         await service(true, serverConfig)
-        
+
         // 删除非 js 文件
         const files = fs.readdirSync(serverConfig.outputDir)
         for (const file of files) {

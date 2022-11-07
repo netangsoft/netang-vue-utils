@@ -6,7 +6,7 @@ const runAsync = require('@netang/utils/runAsync')
 const ssrRender  = require('./render')
 
 /* #if IS_PRO */
-const manifest = __MANIFEST__
+const manifest = __HTML_MANIFEST__
 /* #endif */
 
 /**

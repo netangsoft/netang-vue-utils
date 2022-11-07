@@ -10,7 +10,7 @@ let manifest
 /* #endif */
 
 /* #if IS_PRO */
-const manifest = __MANIFEST__
+const manifest = __HTML_MANIFEST__
 /* #endif */
 
 /* #if IS_DEV */

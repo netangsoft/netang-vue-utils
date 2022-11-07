@@ -49,14 +49,14 @@ async function render(params) {
     // 如果开启 ssr
     if (ssr === true) {
         body = await renderToString(o.app)
-
+        
         // 如果有初始数据
         if (isFillObject(data)) {
             initData = JSON.stringify(data)
         }
     }
 
-    return `<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,shrink-to-fit=no,user-scalable=0,minimum-scale=1.0,viewport-fit=cover">${head}${o.manifest.css}</head><body><noscript>Please enable JavaScript.</noscript><div id="app">${body}</div><script>window.__INIT_DATA__=${initData};</script>${o.manifest.js}</body></html>`
+    return `<html lang="__HTML_LANG__"><head>__HTML_META__${head}${o.manifest.js}__HTML_JS__${o.manifest.css}__HTML_CSS__</head><body><noscript>Please enable JavaScript.</noscript><div id="app">${body}</div><script>window.__INIT_DATA__=${initData};__HTML_SCRIPT__</script></body></html>`
 }
 
 module.exports = render
