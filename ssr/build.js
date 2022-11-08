@@ -91,20 +91,18 @@ function getHtmlDefine({ lang, meta, css, js, script }) {
 async function build(params) {
 
     const o = _merge({
-        // 新环境变量
-        env: null,
-        // 替换包含内容
-        replaceInclude: null,
-        // 替换全局变量
-        replaceDefine: null,
+        // 入口
+        entry: path.join(ROOT_PATH, 'src/main.js'),
         // 是否开启 ssr
         ssr: false,
         // 开启后端监听
         nodemon: true,
-        // 生成 manifest.json 路径
-        manifestPath: path.join(ROOT_PATH, 'src/configs/config/manifest.json'),
-        // 入口
-        entry: path.join(ROOT_PATH, 'src/main.js'),
+        // 新环境变量
+        env: null,
+        // 替换全局变量
+        replaceDefine: null,
+        // 加载器
+        includeLoader: null,
         // 公共配置
         common: {},
         // 前端配置
@@ -267,7 +265,8 @@ async function build(params) {
                 .loader(replaceLoader)
                 .options({
                     env: newEnv,
-                    include: o.replaceInclude,
+                    replace: newReplaceDefine,
+                    includeLoader: o.includeLoader,
                 })
                 .end()
 
@@ -279,7 +278,7 @@ async function build(params) {
                 .options({
                     env: newEnv,
                     replace: newReplaceDefine,
-                    include: o.replaceInclude,
+                    includeLoader: o.includeLoader,
                 })
                 .end()
 
@@ -457,7 +456,7 @@ async function build(params) {
             __HTML_MANIFEST__: JSON.stringify(json),
         })
         await service(true, serverConfig)
-
+        
         // 删除非 js 文件
         const files = fs.readdirSync(serverConfig.outputDir)
         for (const file of files) {
