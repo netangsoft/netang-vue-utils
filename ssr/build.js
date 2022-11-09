@@ -173,7 +173,7 @@ async function build(params) {
             ],
 
             // 生产源地图
-            productionSourceMap: ! server,
+            productionSourceMap: env.IS_DEV,
 
             // 开发服务
             devServer: {},
@@ -252,11 +252,10 @@ async function build(params) {
         config.chainWebpack = function(chain) {
 
             // 定义环境变量
-            if (isFillObject(defineEnv)) {
-                chain
-                    .plugin('netang-env')
-                    .use(webpack.DefinePlugin, [defineEnv])
-            }
+            chain.plugin('netang-env')
+                .use(webpack.DefinePlugin, [
+                    Object.assign({}, newEnv, defineEnv)
+                ])
 
             // 条件编译 .vue 文件
             chain.module
@@ -285,8 +284,7 @@ async function build(params) {
             // 如果是前端
             if (! server) {
                 // 修改复制文件
-                chain
-                    .plugin('copy')
+                chain.plugin('copy')
                     .tap((args) => {
                         args[0].patterns[0].globOptions.ignore.push('**/favicon.ico')
                         const from = path.join(ROOT_PATH, 'public/favicon.ico')
@@ -456,7 +454,7 @@ async function build(params) {
             __HTML_MANIFEST__: JSON.stringify(json),
         })
         await service(true, serverConfig)
-        
+
         // 删除非 js 文件
         const files = fs.readdirSync(serverConfig.outputDir)
         for (const file of files) {

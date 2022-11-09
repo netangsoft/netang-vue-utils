@@ -1,6 +1,6 @@
 {
   "name": "@netang/vue-utils",
-  "version": "3.0.5",
+  "version": "3.0.7",
   "description": "netang-vue-utils",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
