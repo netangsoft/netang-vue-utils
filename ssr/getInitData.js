@@ -1,3 +1,4 @@
+import _cloneDeep from 'lodash/cloneDeep'
 import _get from 'lodash/get'
 import isFillObject from '@netang/utils/isFillObject'
 import { stateSsrAsyncData } from '../vars'
@@ -9,8 +10,8 @@ export default function() {
 
     // 获取异步状态数据
     if (isFillObject(_get(stateSsrAsyncData.value, 'data'))) {
-        return stateSsrAsyncData.value.data
+        return _cloneDeep(stateSsrAsyncData.value.data)
     }
-
+    
     return false
 }
