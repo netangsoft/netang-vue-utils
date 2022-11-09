@@ -1,20 +1,20 @@
 import { useRoute } from 'vue-router'
 import _has from 'lodash/has'
 import _get from 'lodash/get'
-import _isNil from 'lodash/isNil'
 import isFillObject from '@netang/utils/isFillObject'
 import runAsync from '@netang/utils/runAsync'
 import toNumberDeep from '@netang/utils/toNumberDeep'
-import { stateSsrAsyncData } from '../vars'
+import getInitData from './getInitData'
 
 /**
  * ssr 获取异步数据
  */
 export default async function() {
 
-    // 获取异步状态数据
-    if (isFillObject(_get(stateSsrAsyncData.value, 'data'))) {
-        return stateSsrAsyncData.value.data
+    // 获取初始数据
+    const initData = getInitData()
+    if (initData !== false) {
+        return initData
     }
 
     // 获取当前路由
@@ -39,7 +39,7 @@ export default async function() {
         throw new Error('asyncData 返回数据错误')
         /* #endif */
     }
-    
+
     /* #if IS_DEV && IS_WEB */
     throw new Error('没有找到 asyncData 方法')
     /* #endif */

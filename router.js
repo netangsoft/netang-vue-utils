@@ -7,7 +7,6 @@ import isFillObject from '@netang/utils/isFillObject'
 import forEach from '@netang/utils/forEach'
 import toNumberDeep from '@netang/utils/toNumberDeep'
 import slash from '@netang/utils/slash'
-import { getCurrentInstance } from 'vue'
 import { useRoute } from 'vue-router'
 
 /**
@@ -596,7 +595,7 @@ function getQuery(params, path, defaultValue = {}) {
             return defaultValue
         }
     }
-    
+
     if (isFillObject(params.query)) {
         return toNumberDeep(path ? _get(params.query, path, defaultValue) : params.query)
     }
