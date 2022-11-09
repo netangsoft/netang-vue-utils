@@ -6,9 +6,10 @@ const isFunction = require('lodash/isFunction')
 const isFillObject = require('@netang/utils/isFillObject')
 const runAsync = require('@netang/utils/runAsync')
 const filter = require('@netang/utils/filter')
+const toNumberDeep = require('@netang/utils/toNumberDeep')
 /* #endif */
 
-const { stateSsrRenderData } = require('../vars')
+const { stateSsrAsyncData } = require('../vars')
 
 // 【前端】
 /* #if IS_WEB */
@@ -16,15 +17,15 @@ let isRendered = false
 /* #endif */
 
 /**
- * ssr 设置渲染数据
+ * ssr 设置异步数据
  */
-async function setRenderData(params) {
+async function setAsyncData(params) {
 
     // 【前端】
     // --------------------------------------------------
     /* #if IS_WEB */
         if (isRendered) {
-            stateSsrRenderData.value = {
+            stateSsrAsyncData.value = {
                 data: null,
             }
         } else {
@@ -46,7 +47,11 @@ async function setRenderData(params) {
         } = params
 
         // 执行路由跳转的组件中的 asyncData 方法返回的数据
-        const resAsyncData = _has(to, 'matched[0].components.default.asyncData') ? await runAsync(to.matched[0].components.default.asyncData)(to) : {}
+        const resAsyncData = _has(to, 'matched[0].components.default.asyncData') ? await runAsync(to.matched[0].components.default.asyncData)({
+            route: to,
+            query: isFillObject(_get(to, 'query')) ? toNumberDeep(to.query) : {},
+            render: true,
+        }) : {}
 
         const o = Object.assign({
             // 是否开启 ssr
@@ -94,8 +99,8 @@ async function setRenderData(params) {
             format(o)
         }
 
-        stateSsrRenderData.value = o
+        stateSsrAsyncData.value = o
     /* #endif */
 }
 
-module.exports = setRenderData
+module.exports = setAsyncData

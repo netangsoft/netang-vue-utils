@@ -1,6 +1,6 @@
 const { renderToString } = require('@vue/server-renderer')
 const isFillObject = require('@netang/utils/isFillObject')
-const { stateSsrRenderData } = require('../vars')
+const { stateSsrAsyncData } = require('../vars')
 
 /**
  * ssr 渲染数据
@@ -23,7 +23,7 @@ async function render(params) {
         description,
         // 初始数据
         data,
-    } = stateSsrRenderData.value
+    } = stateSsrAsyncData.value
 
     // 头部
     let head = o.manifest.ico

@@ -29,10 +29,10 @@ function cloud(render) {
             },
             body: await ssrRender(Object.assign(
                 await runAsync(render)({
-                    url
+                    url,
                 }),
                 {
-                    manifest
+                    manifest,
                 }
             )),
         }

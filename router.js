@@ -3,8 +3,12 @@ import _has from 'lodash/has'
 import _get from 'lodash/get'
 import _isNil from 'lodash/isNil'
 import _isFunction from 'lodash/isFunction'
+import isFillObject from '@netang/utils/isFillObject'
 import forEach from '@netang/utils/forEach'
+import toNumberDeep from '@netang/utils/toNumberDeep'
 import slash from '@netang/utils/slash'
+import { getCurrentInstance } from 'vue'
+import { useRoute } from 'vue-router'
 
 /**
  * 路由
@@ -582,156 +586,29 @@ export function setRouterStore(options, from) {
 }
 
 /**
+ * 获取传参
+ */
+function getQuery(params, path, defaultValue = {}) {
+
+    if (! _has(params, 'query')) {
+        params = useRoute()
+        if (! _has(params, 'query')) {
+            return defaultValue
+        }
+    }
+    
+    if (isFillObject(params.query)) {
+        return toNumberDeep(path ? _get(params.query, path, defaultValue) : params.query)
+    }
+
+    return defaultValue
+}
+
+/**
  * 路由
  */
 export default {
 
-    /**
-     * 通过在历史堆栈中推送一个 entry, 以编程方式导航到一个新的 URL
-     * @param {object} options
-     */
-    push(options) {
-        push(options, _get(options, 'replace', false))
-    },
-
-    /**
-     * 通过替换历史堆栈中的当前 entry, 以编程方式导航到一个新的 URL
-     * @param {object} options
-     */
-    replace(options) {
-        push(options, true)
-    },
-
-    /**
-     * 后退
-     * @param {any} eventData 路由事件参数(用于跳转 history 使用)
-     */
-    back(eventData = null) {
-        setEvent(eventData)
-        window.history.back()
-    },
-
-    /**
-     * 前进
-     * @param {any} eventData 路由事件参数(用于跳转 history 使用)
-     */
-    forward(eventData = null) {
-        setEvent(eventData)
-        window.history.forward()
-    },
-
-    /**
-     * 在历史中前进或后退
-     * @param {number} delta
-     * @param {any} eventData 路由事件参数(用于跳转 history 使用)
-     */
-    go(delta, eventData = null) {
-        setEvent(eventData)
-        utils.routerHandle.go(delta)
-    },
-
-    /**
-     * 返回路由地址的标准化版本
-     */
-    resolve(options) {
-        return resolve(options, true)
-    },
-
-    /**
-     * 获取当前路由类型(back:后退,forward:前进,null:无)
-     */
-    type() {
-        return _get(stateRouterState.value, 'type')
-    },
-
-    /**
-     * 获取路由事件参数(用于跳转 history 使用)
-     */
-    event() {
-        return stateRouterEvent.value
-    },
-
-    /**
-     * 离开当前页面
-     */
-    leave() {
-        if (! _isNil(stateRouterViewNeedTo.value)) {
-
-            stateRouterViewIsIgnoreBeforeLeave.value = true
-            const { type, to } = stateRouterViewNeedTo.value
-
-            switch (type) {
-                case 'push':
-                    push(to.options, to.replace)
-                    break
-
-                case 'forward':
-                    window.history.forward()
-                    break
-
-                default:
-                    window.history.back()
-            }
-
-        }
-    },
-
-    /**
-     * 路由 store 操作
-     */
-    store: {
-
-        /**
-         * 将路由保存至 store
-         * @param {object} options 路由参数
-         * @param {boolean} replace 是否替换
-         * @param {boolean} isPush 是否 push 的路由
-         */
-        set: setStore,
-
-        /**
-         * 获取路由 store
-         * @param {object} options 路由参数
-         */
-        get: getStore,
-
-        /**
-         * 查找所有匹配条件的路由 store
-         * @param {object} options 查找路由参数的条件
-         */
-        find: findStore,
-
-        /**
-         * 删除路由 store
-         * @param {string} options 查找路由参数的条件
-         */
-        delete(options) {
-
-            // 查找所有匹配条件的路由 store
-            const opts = findStore(options)
-            if (opts.length) {
-
-                // 获取需删除的 ids 数组
-                const deleteIds = []
-                forEach(opts, function(opt) {
-                    deleteIds.push(opt.id)
-                })
-
-                const state = stateRouters.value
-                for (let i = state.length - 1; i >= 0; i--) {
-                    // 删除匹配的数据
-                    if (_.indexOf(deleteIds, state[i].id) > -1) {
-                        state.splice(i, 1)
-                    }
-                }
-            }
-        },
-
-        /**
-         * 删除所有路由 store
-         */
-        flush() {
-            stateRouters.value = []
-        },
-    },
+    // 获取传参
+    getQuery,
 }

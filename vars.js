@@ -38,7 +38,7 @@ export const stateOnLine = ref(true)
 // ------------------------------
 /* #if IS_SSR && IS_WEB */
 // ssr 渲染数据
-export const stateSsrRenderData = ref({
+export const stateSsrAsyncData = ref({
     // 初始数据
     data: window.__INIT_DATA__ ? window.__INIT_DATA__ : null,
 })
@@ -48,7 +48,7 @@ export const stateSsrRenderData = ref({
 // ------------------------------
 /* #if IS_SSR && IS_SERVER */
 // ssr 渲染数据
-export const stateSsrRenderData = ref({
+export const stateSsrAsyncData = ref({
     // 是否开启 ssr
     ssr: false,
     // 标题
