@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const webpack = require('webpack')
+const _get = require('lodash/get')
 const _has = require('lodash/has')
 const _isFunction = require('lodash/isFunction')
 const _merge = require('lodash/merge')
@@ -117,8 +118,6 @@ async function build(params) {
             devServer: {
                 port: '58808',
             },
-            // 打包路径
-            outputDir: path.join(ROOT_PATH, 'dist/server'),
         },
         // html 模板
         html: {
@@ -131,8 +130,13 @@ async function build(params) {
     }, params)
 
     // 前端打包路径
-    if (! _has(o.web, 'outputDir')) {
+    if (! _get(o.web, 'outputDir')) {
         o.web.outputDir = o.ssr ? path.join(ROOT_PATH, 'dist/web') : path.join(ROOT_PATH, 'dist')
+    }
+
+    // 后端打包路径
+    if (! _get(o.server, 'outputDir')) {
+        o.server.outputDir = path.join(ROOT_PATH, 'dist/server')
     }
 
     // 获取模板替换变量
@@ -280,8 +284,28 @@ async function build(params) {
                 })
                 .end()
 
-            // 如果是前端
-            if (! server) {
+            // 如果为后端
+            if (server) {
+
+                // 修改下列规则
+                const rules = ['css', 'postcss', 'scss', 'sass', 'less', 'stylus']
+                const oneOfs = ['vue-modules', 'vue', 'normal-modules', 'normal']
+                forEach(rules, function(rule) {
+                    forEach(oneOfs, function(oneOf) {
+                        chain.module
+                            .rule(rule)
+                            .oneOf(oneOf)
+                            .use('extract-css-loader')
+                            .tap(function(options) {
+                                options.emit = false
+                                return options
+                            })
+                    })
+                })
+
+            // 否则是前端
+            } else {
+
                 // 修改复制文件
                 chain.plugin('copy')
                     .tap((args) => {
@@ -376,7 +400,7 @@ async function build(params) {
             webConfig,
         }
     }
-
+    
     // 否则是生产模式 || 非 ssr 模式
     // ------------------------------
     // 编译前端
