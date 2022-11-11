@@ -284,8 +284,22 @@ async function build(params) {
                 })
                 .end()
 
-            // 如果为后端
-            if (server) {
+            // 如果为前端
+            if (! server) {
+                // 修改复制文件
+                chain.plugin('copy')
+                    .tap((args) => {
+                        args[0].patterns[0].globOptions.ignore.push('**/favicon.ico')
+                        const from = path.join(ROOT_PATH, 'public/favicon.ico')
+                        args[0].patterns.push({
+                            from,
+                            to: path.join(config.outputDir, `favicon.${getFileHashName(from)}.ico`),
+                        })
+                        return args
+                    })
+
+            // 否则是后端
+            } else if (env.IS_PRO) {
 
                 // 修改下列规则
                 const rules = ['css', 'postcss', 'scss', 'sass', 'less', 'stylus']
@@ -302,21 +316,6 @@ async function build(params) {
                             })
                     })
                 })
-
-            // 否则是前端
-            } else {
-
-                // 修改复制文件
-                chain.plugin('copy')
-                    .tap((args) => {
-                        args[0].patterns[0].globOptions.ignore.push('**/favicon.ico')
-                        const from = path.join(ROOT_PATH, 'public/favicon.ico')
-                        args[0].patterns.push({
-                            from,
-                            to: path.join(config.outputDir, `favicon.${getFileHashName(from)}.ico`),
-                        })
-                        return args
-                    })
             }
 
             // 用户 webpack 配置
@@ -400,7 +399,7 @@ async function build(params) {
             webConfig,
         }
     }
-    
+
     // 否则是生产模式 || 非 ssr 模式
     // ------------------------------
     // 编译前端
